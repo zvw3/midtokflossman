@@ -3,237 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TTLS Widget | slaxthecollector</title>
+    <title>Real-Time TTLS Widget | slaxthecollector</title>
     <style>
-        * {
+        html, body {
+            background: transparent !important; /* Invisible backdrop for stream overlays */
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background: transparent !important; /* Forces transparent backdrop for TTLS/OBS */
+            width: 400px;
+            height: 300px;
             overflow: hidden;
-            width: 450px;
-            height: 350px;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* Widget Container with Fancy Corners & Subtle Border Glow */
-        .widget-card {
-            background: rgba(15, 23, 42, 0.75); /* Dark semi-transparent matte */
-            border: 2px solid rgba(254, 44, 85, 0.4); /* TikTok Pink/Red accent border */
-            border-radius: 32px 8px 32px 8px; /* Fancy asymmetrical rounded corners */
-            padding: 2rem;
-            width: 380px;
+        .widget-frame {
+            background: rgba(11, 11, 19, 0.88);
+            border: 2px solid #fe2c55; /* TikTok Brand Red */
+            box-shadow: 0 0 20px rgba(254, 44, 85, 0.25);
+            border-radius: 40px 10px 40px 10px; /* Fancy Custom Edges */
+            width: 350px;
+            padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
-                        0 0 20px rgba(254, 44, 85, 0.15);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            box-sizing: border-box;
         }
 
-        /* Profile Badge Row */
-        .profile-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 1rem;
-        }
-
-        .avatar-glow {
-            width: 42px;
-            height: 42px;
-            border-radius: 14px; /* Matches the theme */
-            background: linear-gradient(45deg, #fe2c55, #25f4ee); /* Classic platform colors */
-            padding: 2px;
-        }
-
-        .avatar-glow .inner-av {
-            width: 100%;
-            height: 100%;
-            border-radius: 12px;
-            background: #0f172a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .user-meta {
-            text-align: left;
-        }
-
-        .username {
-            color: #ffffff;
-            font-size: 1.2rem;
+        .user-header {
+            font-size: 1.1rem;
             font-weight: 800;
+            color: #ffffff;
             letter-spacing: -0.5px;
-            line-height: 1.1;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .handle {
-            color: #25f4ee; /* Vibrant Cyan */
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #25f4ee; /* Cyan active dot */
+            border-radius: 50%;
+            box-shadow: 0 0 8px #25f4ee;
         }
 
-        /* Main Counter */
         .counter-box {
-            position: relative;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 16px;
-            padding: 1rem 0;
-            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 18px;
+            padding: 1.25rem 0;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .counter {
+        .count-number {
             font-size: 3.5rem;
             font-weight: 900;
-            letter-spacing: -1.5px;
             color: #ffffff;
+            line-height: 1;
+            letter-spacing: -1.5px;
             font-variant-numeric: tabular-nums;
-            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: inline-block;
+            transition: color 0.3s ease;
         }
 
-        /* Subtle dynamic pop effect for stream alerts */
-        .pop-animation {
-            transform: scale(1.08);
-            color: #fe2c55 !important;
-        }
-
-        .label {
+        .count-label {
             color: #94a3b8;
             font-size: 0.7rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
-            font-weight: 700;
-            margin-top: 2px;
+            margin-top: 8px;
         }
 
-        /* Dynamic Goal Bar */
-        .goal-container {
-            width: 100%;
-        }
-
-        .goal-text {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .goal-bar-bg {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .goal-bar-fill {
-            height: 100%;
-            width: 74%; /* Changes dynamically via JS */
-            background: linear-gradient(90deg, #fe2c55, #ff6b8b);
-            border-radius: 10px;
-            transition: width 0.5s ease-out;
+        /* Error/Loading text variations */
+        .loading {
+            font-size: 1.8rem !important;
+            color: #94a3b8 !important;
+            letter-spacing: 0px !important;
         }
     </style>
 </head>
 <body>
 
-    <div class="widget-card">
-        <div class="profile-row">
-            <div class="avatar-glow">
-                <div class="inner-av">👑</div>
-            </div>
-            <div class="user-meta">
-                <div class="username">slaxthecollector</div>
-                <div class="handle">LIVE TRACKER</div>
-            </div>
+    <div class="widget-frame">
+        <div class="user-header">
+            <div class="status-dot" id="statusIndicator"></div>
+            slaxthecollector
         </div>
-
+        
         <div class="counter-box">
-            <div class="counter" id="followerCount">10,000</div>
-            <div class="label">Followers</div>
-        </div>
-
-        <div class="goal-container">
-            <div class="goal-text">
-                <span>Goal: <strong id="nextGoal">15,000</strong></span>
-                <span id="goalPercent">74%</span>
-            </div>
-            <div class="goal-bar-bg">
-                <div class="goal-bar-fill" id="goalBar"></div>
-            </div>
+            <div class="count-number loading" id="totalFollowers">Connecting...</div>
+            <div class="count-label" id="labelField">Live Followers</div>
         </div>
     </div>
 
     <script>
-        const counterEl = document.getElementById('followerCount');
-        const goalBarEl = document.getElementById('goalBar');
-        const goalPercentEl = document.getElementById('goalPercent');
-        const nextGoalEl = document.getElementById('nextGoal');
-        
-        // Base starting point
-        let currentFollowers = 12450; 
+        const username = "slaxthecollector";
+        const counterEl = document.getElementById('totalFollowers');
+        const statusDot = document.getElementById('statusIndicator');
 
-        function updateWidget() {
-            // Live simulation logic: random spikes every few seconds
-            const chance = Math.random();
-            let change = 0;
-            
-            if (chance > 0.4) change = Math.floor(Math.random() * 3) + 1; // +1 to +3 gain
+        // Accesses the livecounts API stream via an open cors wrapper proxy
+        async function fetchRealFollowers() {
+            try {
+                // Step 1: Query the user lookup database
+                const searchUrl = `https://tiktok.livecounts.io/user/search/${username}`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error();
+                
+                const wrapperData = await response.json();
+                const data = JSON.parse(wrapperData.contents);
+                
+                if (data && data.users && data.users.length > 0) {
+                    // Match exact profile
+                    const targetUser = data.users.find(u => u.username.toLowerCase() === username.toLowerCase()) || data.users[0];
+                    const userId = targetUser.userId;
 
-            if (change > 0) {
-                currentFollowers += change;
-                
-                // Visual Update
-                counterEl.innerText = currentFollowers.toLocaleString();
-                
-                // Dynamic Milestone Target calculation
-                const baseMilestone = 5000;
-                const prevMilestone = Math.floor(currentFollowers / baseMilestone) * baseMilestone;
-                const nextMilestone = prevMilestone + baseMilestone;
-                
-                nextGoalEl.innerText = nextMilestone.toLocaleString();
-                
-                // Progress Bar calculation
-                const progress = ((currentFollowers - prevMilestone) / baseMilestone) * 100;
-                goalBarEl.style.width = `${progress}%`;
-                goalPercentEl.innerText = `${Math.floor(progress)}%`;
+                    // Step 2: Fetch real-time specific user stats using parsed ID
+                    const statsUrl = `https://tiktok.livecounts.io/user/stats/${userId}`;
+                    const statsProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(statsUrl)}`;
+                    
+                    const statsResponse = await fetch(statsProxy);
+                    const statsWrapper = await statsResponse.json();
+                    const statsData = JSON.parse(statsWrapper.contents);
 
-                // Quick pop/flash color animation for stream engagement
-                counterEl.classList.add('pop-animation');
-                setTimeout(() => {
-                    counterEl.classList.remove('pop-animation');
-                }, 250);
+                    if (statsData && statsData.followers !== undefined) {
+                        // Remove loading styles and display absolute real value
+                        counterEl.classList.remove('loading');
+                        counterEl.style.color = '#ffffff';
+                        counterEl.innerText = Number(statsData.followers).toLocaleString();
+                        statusDot.style.background = '#25f4ee';
+                        statusDot.style.boxShadow = '0 0 8px #25f4ee';
+                    }
+                } else {
+                    counterEl.innerText = "User Offline";
+                    counterEl.classList.add('loading');
+                }
+            } catch (err) {
+                // Graceful fallback if proxy is busy or API limits rate
+                console.error("API Fetch Error: ", err);
+                statusDot.style.background = '#fe2c55';
+                statusDot.style.boxShadow = '0 0 8px #fe2c55';
             }
         }
 
-        // Variable timing loop to mimic realistic human interactions
-        function startLiveLoop() {
-            const randomTime = Math.random() * (3500 - 1200) + 1200;
-            setTimeout(() => {
-                updateWidget();
-                startLiveLoop();
-            }, randomTime);
-        }
-
-        // Init layout
-        counterEl.innerText = currentFollowers.toLocaleString();
-        updateWidget();
-        startLiveLoop();
+        // Poll TikTok servers every 10 seconds (keeps it accurate without spamming the proxy server)
+        setInterval(fetchRealFollowers, 10000);
+        
+        // Initial kick-off run
+        fetchRealFollowers();
     </script>
 </body>
 </html>
