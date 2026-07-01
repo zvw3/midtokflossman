@@ -1,226 +1,1259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ ZVW3 | Test Site</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>slax W or L · TTL overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,700;0,800;0,900;1,500&display=swap" rel="stylesheet" />
     <style>
-        * {
+        /* ───────── RESET & BASE ───────── */
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            padding: 2rem;
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            overflow: hidden;
+            position: relative;
+            user-select: none;
+            padding: 0.5rem;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            border-radius: 2rem;
-            padding: 3rem;
-            max-width: 600px;
+        /* ─── WebM background (full screen) ─── */
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.15);
-            transition: transform 0.3s ease;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.45;
+            filter: brightness(0.7) saturate(0.9) contrast(1.1);
         }
 
-        .glass-card:hover {
-            transform: scale(1.01);
+        /* dark vignette overlay for readability */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.65) 100%);
         }
 
-        h1 {
-            font-size: 3rem;
-            background: linear-gradient(120deg, #fff, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 0.5rem;
+        /* subtle noise */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 256px 256px;
         }
 
-        .badge {
-            display: inline-block;
-            background: rgba(167, 139, 250, 0.3);
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            color: #c4b5fd;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(167, 139, 250, 0.5);
+        /* ───────── OVERLAY CARD ───────── */
+        .overlay {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 600px;
+            padding: 1.6rem 1.8rem 1.8rem;
+            background: rgba(6, 4, 20, 0.55);
+            backdrop-filter: blur(28px) saturate(1.3);
+            -webkit-backdrop-filter: blur(28px) saturate(1.3);
+            border-radius: 2.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow:
+                0 40px 100px rgba(0, 0, 0, 0.7),
+                0 0 80px rgba(100, 50, 200, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin: 0.5rem;
         }
 
-        .status {
-            background: rgba(34, 197, 94, 0.2);
-            border-left: 4px solid #22c55e;
-            padding: 1rem;
-            border-radius: 1rem;
-            margin: 1.5rem 0;
+        .overlay::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 2.5rem;
+            padding: 1px;
+            background: conic-gradient(from 0deg, transparent, rgba(120, 80, 255, 0.08), transparent, rgba(0, 200, 255, 0.08), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 0;
+            animation: borderSpin 28s linear infinite;
+        }
+
+        @keyframes borderSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .overlay:hover {
+            transform: translateY(-2px) scale(1.002);
+            box-shadow:
+                0 50px 120px rgba(0, 0, 0, 0.8),
+                0 0 120px rgba(100, 50, 200, 0.06);
+        }
+
+        /* ───────── HEADER with webm inline ───────── */
+        .header {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            background: #22c55e;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-
-        .status-text {
-            color: #bbf7d0;
-            font-weight: 500;
-        }
-
-        p {
-            color: #e2e8f0;
-            line-height: 1.6;
-            margin: 1rem 0;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
+            justify-content: space-between;
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+            position: relative;
+            z-index: 1;
             flex-wrap: wrap;
-            margin: 2rem 0 1rem;
         }
 
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 40px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #f0e6ff 20%, #b8a0ff 50%, #6dd5fa 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            filter: drop-shadow(0 0 30px rgba(120, 80, 255, 0.08));
+            white-space: nowrap;
+        }
+
+        .header h1 .rocket {
+            -webkit-text-fill-color: initial;
+            color: #ffd700;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.15));
+            display: inline-block;
+            animation: rocketFloat 3s ease-in-out infinite;
+            font-size: 1.3rem;
+        }
+
+        @keyframes rocketFloat {
+            0%,
+            100% {
+                transform: translateY(0) rotate(-4deg);
+            }
+            50% {
+                transform: translateY(-4px) rotate(4deg);
+            }
+        }
+
+        /* ─── inline webm (mini player) ─── */
+        .header-video {
+            flex-shrink: 0;
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 30px rgba(100, 50, 200, 0.06);
+            background: #000;
+            position: relative;
+        }
+
+        .header-video video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .header-video::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .header .sub {
+            font-size: 0.6rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-family: 'Inter', monospace;
+            white-space: nowrap;
+        }
+
+        .header .sub .star-icon {
+            color: #ffd700;
+            opacity: 0.3;
+            margin: 0 0.15rem;
+        }
+
+        /* ───────── STATS ROW ───────── */
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 0.8rem;
+            margin-bottom: 0.6rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0.3rem 0.4rem;
+            border-radius: 1.2rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-card.stat-w::before {
+            background: radial-gradient(circle at 30% 40%, rgba(77, 208, 225, 0.05), transparent 70%);
+        }
+        .stat-card.stat-l::before {
+            background: radial-gradient(circle at 70% 40%, rgba(240, 98, 146, 0.05), transparent 70%);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card .label {
+            font-weight: 700;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.35;
+            transition: inherit;
+            margin-bottom: 0.05rem;
+        }
+
+        .stat-card .value {
+            font-weight: 900;
+            font-size: 2.8rem;
+            line-height: 1.05;
+            transition: inherit;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            position: relative;
+        }
+
+        .stat-card .pct {
+            font-weight: 500;
+            font-size: 0.6rem;
+            opacity: 0.25;
+            transition: inherit;
+            margin-top: 0.05rem;
+            letter-spacing: 0.02em;
+        }
+
+        .stat-w .label,
+        .stat-w .value,
+        .stat-w .pct {
+            color: #4dd0e1;
+            text-shadow: 0 0 30px rgba(77, 208, 225, 0.06);
+        }
+
+        .stat-l .label,
+        .stat-l .value,
+        .stat-l .pct {
+            color: #f06292;
+            text-shadow: 0 0 30px rgba(240, 98, 146, 0.06);
+        }
+
+        /* ── leading glow ── */
+        .stat-card.leading {
+            transform: scale(1.04);
+            border-color: rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.025);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.02);
+        }
+
+        .stat-card.leading .label {
+            opacity: 0.6;
+            font-size: 0.7rem;
+        }
+        .stat-card.leading .value {
+            font-size: 3.2rem;
+        }
+        .stat-card.leading .pct {
+            opacity: 0.4;
+            font-size: 0.65rem;
+        }
+
+        .stat-w.leading {
+            border-color: rgba(77, 208, 225, 0.12);
+            box-shadow: 0 0 60px rgba(77, 208, 225, 0.04);
+        }
+        .stat-l.leading {
+            border-color: rgba(240, 98, 146, 0.12);
+            box-shadow: 0 0 60px rgba(240, 98, 146, 0.04);
+        }
+
+        /* ───────── BAR ───────── */
+        .bar-wrapper {
+            position: relative;
+            margin: 0.2rem 0 1rem;
+            border-radius: 100px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.4);
+            overflow: visible;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            z-index: 1;
+        }
+
+        .bar-track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 100px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .bar-w {
+            height: 100%;
+            background: linear-gradient(135deg, #0088cc, #4dd0e1, #80deea);
+            border-radius: 100px 0 0 100px;
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 30px rgba(77, 208, 225, 0.10);
+            position: relative;
+            min-width: 0px;
+        }
+
+        .bar-w::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        .bar-l {
+            height: 100%;
+            background: linear-gradient(135deg, #cc0066, #f06292, #f48fb1);
+            border-radius: 0 100px 100px 0;
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 30px rgba(240, 98, 146, 0.10);
+            position: relative;
+            min-width: 0px;
+        }
+
+        .bar-l::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+
+        .bar-divider {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 45%;
+            background: rgba(255, 255, 255, 0.10);
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.03);
+            z-index: 2;
+            transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+
+        /* ───────── CONTROLS ───────── */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.4rem;
+            margin: 0.2rem 0 0.4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .ctrl-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
             border: none;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 300;
             cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .ctrl-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .ctrl-btn:hover::before {
+            opacity: 1;
+        }
+
+        .ctrl-btn:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.10);
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.88);
+        }
+
+        .ctrl-btn.btn-w {
+            background: rgba(77, 208, 225, 0.05);
+            border-color: rgba(77, 208, 225, 0.08);
+            color: #4dd0e1;
+        }
+        .ctrl-btn.btn-w:hover {
+            background: rgba(77, 208, 225, 0.12);
+            box-shadow: 0 0 40px rgba(77, 208, 225, 0.06);
+            border-color: rgba(77, 208, 225, 0.15);
+        }
+
+        .ctrl-btn.btn-l {
+            background: rgba(240, 98, 146, 0.05);
+            border-color: rgba(240, 98, 146, 0.08);
+            color: #f06292;
+        }
+        .ctrl-btn.btn-l:hover {
+            background: rgba(240, 98, 146, 0.12);
+            box-shadow: 0 0 40px rgba(240, 98, 146, 0.06);
+            border-color: rgba(240, 98, 146, 0.15);
+        }
+
+        .ctrl-btn .arrow-icon {
+            display: inline-block;
+            transition: transform 0.15s ease;
+            font-size: 1.2rem;
+            line-height: 1;
+            font-weight: 400;
+        }
+
+        .ctrl-btn:active .arrow-icon {
+            transform: scale(0.7);
+        }
+
+        .ctrl-btn .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            transform: scale(0);
+            animation: rippleAnim 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes rippleAnim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .ctrl-label {
+            font-weight: 600;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            min-width: 1rem;
+            text-align: center;
+        }
+
+        .ctrl-label .highlight-w {
+            color: #4dd0e1;
+        }
+        .ctrl-label .highlight-l {
+            color: #f06292;
+        }
+
+        .ctrl-label .arrow-hint {
+            opacity: 0.2;
+            font-size: 0.5rem;
+            display: block;
+            margin-top: 0.05rem;
+            letter-spacing: 0.08em;
+        }
+
+        /* small decrement buttons */
+        .ctrl-btn.small {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+        .ctrl-btn.small .arrow-icon {
             font-size: 0.9rem;
         }
 
-        .btn-primary {
-            background: linear-gradient(90deg, #8b5cf6, #6d28d9);
-            color: white;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        /* ───────── RESET ───────── */
+        .reset-area {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.2rem;
+            position: relative;
+            z-index: 1;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(139, 92, 246, 0.5);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid rgba(139, 92, 246, 0.6);
-            color: #c4b5fd;
-        }
-
-        .btn-outline:hover {
-            background: rgba(139, 92, 246, 0.2);
-            border-color: #8b5cf6;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .info-item {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            border-radius: 1rem;
-            text-align: center;
-        }
-
-        .info-label {
-            font-size: 0.75rem;
+        .reset-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.06);
+            font-size: 0.5rem;
+            font-family: 'Inter', monospace;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #9ca3af;
+            cursor: pointer;
+            padding: 0.2rem 0.8rem;
+            border-radius: 100px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
         }
 
-        .info-value {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: #a78bfa;
-            margin-top: 0.25rem;
+        .reset-btn:hover {
+            color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.01);
         }
 
-        footer {
-            text-align: center;
-            margin-top: 2rem;
+        .reset-btn:active {
+            transform: scale(0.94);
+            color: rgba(255, 100, 100, 0.2);
+        }
+
+        .reset-btn .icon {
+            margin-right: 0.3rem;
+        }
+
+        /* ───────── TOAST ───────── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(6, 4, 20, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 0.4rem 1.4rem;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            color: #fff;
+            font-weight: 500;
             font-size: 0.75rem;
-            color: #6b7280;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 8px 48px rgba(0, 0, 0, 0.4);
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
         }
 
-        @media (max-width: 500px) {
-            .glass-card { padding: 1.5rem; }
-            h1 { font-size: 2rem; }
-            .info-grid { grid-template-columns: 1fr; }
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast .emoji {
+            margin-right: 0.4rem;
+        }
+
+        /* ───────── KEY HINT ───────── */
+        .key-hint {
+            position: fixed;
+            bottom: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            font-size: 0.5rem;
+            font-family: 'Inter', monospace;
+            color: rgba(255, 255, 255, 0.04);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            pointer-events: none;
+            text-align: center;
+            line-height: 1.6;
+            transition: opacity 1s ease;
+        }
+
+        .key-hint .kbd {
+            display: inline-block;
+            padding: 0.05rem 0.35rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.45rem;
+            color: rgba(255, 255, 255, 0.06);
+            margin: 0 0.05rem;
+            font-weight: 600;
+        }
+
+        /* ───────── RESPONSIVE ───────── */
+        @media (max-width: 540px) {
+            .overlay {
+                padding: 1rem 1rem 1.2rem;
+                border-radius: 1.6rem;
+                max-width: 100%;
+                margin: 0.3rem;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            .header h1 .rocket {
+                font-size: 1rem;
+            }
+            .header-video {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+            }
+
+            .stat-card .value {
+                font-size: 2.2rem;
+            }
+            .stat-card.leading .value {
+                font-size: 2.6rem;
+            }
+            .stat-card .label {
+                font-size: 0.55rem;
+            }
+            .stat-card .pct {
+                font-size: 0.5rem;
+            }
+
+            .bar-wrapper {
+                height: 14px;
+            }
+
+            .ctrl-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+            .ctrl-btn .arrow-icon {
+                font-size: 1rem;
+            }
+            .ctrl-btn.small {
+                width: 28px;
+                height: 28px;
+                font-size: 0.7rem;
+            }
+            .ctrl-btn.small .arrow-icon {
+                font-size: 0.8rem;
+            }
+            .ctrl-label {
+                font-size: 0.5rem;
+            }
+
+            .stats-row {
+                gap: 0.4rem;
+            }
+            .stat-card {
+                padding: 0.3rem 0.2rem 0.3rem;
+                border-radius: 0.8rem;
+            }
+
+            .key-hint {
+                display: none;
+            }
+            .toast {
+                font-size: 0.65rem;
+                padding: 0.3rem 1rem;
+                bottom: 1.2rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .overlay {
+                padding: 0.6rem 0.6rem 0.8rem;
+                border-radius: 1.2rem;
+            }
+            .header h1 {
+                font-size: 1rem;
+            }
+            .header-video {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+            }
+            .stat-card .value {
+                font-size: 1.8rem;
+            }
+            .stat-card.leading .value {
+                font-size: 2.2rem;
+            }
+            .ctrl-btn {
+                width: 30px;
+                height: 30px;
+            }
+            .ctrl-btn .arrow-icon {
+                font-size: 0.8rem;
+            }
+            .ctrl-btn.small {
+                width: 24px;
+                height: 24px;
+            }
+            .bar-wrapper {
+                height: 12px;
+                margin: 0.1rem 0 0.6rem;
+            }
+            .controls {
+                gap: 0.2rem;
+            }
+        }
+
+        /* ───────── ANIMATIONS ───────── */
+        @keyframes popNum {
+            0% {
+                transform: scale(1);
+            }
+            35% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .stat-card .value.pop {
+            animation: popNum 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ─── twinkling dots ─── */
+        .twinkle-dot {
+            position: fixed;
+            border-radius: 50%;
+            background: #fff;
+            z-index: 0;
+            pointer-events: none;
+            animation: twinkle var(--duration, 3s) ease-in-out infinite alternate;
+        }
+        @keyframes twinkle {
+            0% {
+                opacity: 0.03;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 0.4;
+                transform: scale(1.2);
+            }
+        }
+
+        /* ─── drag handle ─── */
+        .drag-handle {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.6rem;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.03);
+            letter-spacing: 0.04em;
+            cursor: grab;
+            z-index: 5;
+            font-family: 'Inter', monospace;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+        .drag-handle:hover {
+            color: rgba(255, 255, 255, 0.07);
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        @media (max-width: 540px) {
+            .drag-handle {
+                display: none;
+            }
+        }
+
+        /* slax badge */
+        .slax-badge {
+            position: absolute;
+            bottom: 0.4rem;
+            right: 0.6rem;
+            font-size: 0.4rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.03);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-family: 'Inter', monospace;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="glass-card">
-        <div class="badge">✨ GitHub Pages • Live</div>
-        <h1>Test site<br>is working 🚀</h1>
-        
-        <div class="status">
-            <div class="status-dot"></div>
-            <span class="status-text">• Deployment successful •</span>
+
+    <!-- ─── Fullscreen WebM Background ─── -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="gif-6245713a-ff19-4c51-89fd-bd2616e0b289-1782253128566.webm" type="video/webm" />
+        <!-- fallback: gradient if video fails -->
+    </video>
+
+    <!-- ─── Overlays ─── -->
+    <div class="vignette"></div>
+    <div class="noise"></div>
+
+    <!-- ─── Twinkle dots ─── -->
+    <div class="twinkle-dot" style="top:6%;left:10%;width:2px;height:2px;--duration:4.5s;"></div>
+    <div class="twinkle-dot" style="top:25%;left:88%;width:3px;height:3px;--duration:3.8s;animation-delay:0.7s;"></div>
+    <div class="twinkle-dot" style="top:60%;left:3%;width:1.5px;height:1.5px;--duration:5.2s;animation-delay:1.4s;"></div>
+    <div class="twinkle-dot" style="top:80%;right:8%;width:2.5px;height:2.5px;--duration:4.1s;animation-delay:2s;"></div>
+    <div class="twinkle-dot" style="top:45%;left:96%;width:2px;height:2px;--duration:4.9s;animation-delay:0.4s;"></div>
+
+    <!-- ─── Key hint ─── -->
+    <div class="key-hint" id="keyHint">
+        <span class="kbd">◀</span> <span class="kbd">▶</span> &nbsp;·&nbsp; <span class="kbd">−</span> <span class="kbd">+</span> &nbsp;·&nbsp; <span class="kbd">R</span> reset &nbsp;·&nbsp; <span class="kbd">S</span> save
+    </div>
+
+    <!-- ─── Toast ─── -->
+    <div class="toast" id="toast">
+        <span class="emoji">💾</span>
+        <span id="toastMsg">Saved</span>
+    </div>
+
+    <!-- ─── OVERLAY ─── -->
+    <div class="overlay" id="overlay" role="main" aria-label="slax W or L Counter">
+
+        <!-- Drag handle -->
+        <div class="drag-handle" title="Drag to reposition">⣿</div>
+
+        <!-- Header with inline webm -->
+        <div class="header">
+            <div class="header-left">
+                <h1>
+                    <span class="rocket">🚀</span>
+                    slax W or L
+                </h1>
+                <span class="sub">
+                    <span class="star-icon">✦</span> counter
+                </span>
+            </div>
+            <div class="header-video">
+                <video autoplay loop muted playsinline>
+                    <source src="gif-6245713a-ff19-4c51-89fd-bd2616e0b289-1782253128566.webm" type="video/webm" />
+                </video>
+            </div>
         </div>
 
-        <p>
-            If you're seeing this fancy UI, your GitHub Pages setup is <strong>working perfectly</strong>.
-            The file is now named <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:6px;">index.html</code> 
-            and the site is live at:
-        </p>
-
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">Your Repo</div>
-                <div class="info-value">zvw3/reto</div>
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card stat-w" id="statW">
+                <span class="label">Wins</span>
+                <span class="value" id="wCount">0</span>
+                <span class="pct" id="wPct">0%</span>
             </div>
-            <div class="info-item">
-                <div class="info-label">Live URL</div>
-                <div class="info-value">zvw3.github.io/reto</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Status</div>
-                <div class="info-value">✅ Active</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Server</div>
-                <div class="info-value">GitHub Pages</div>
+            <div class="stat-card stat-l" id="statL">
+                <span class="label">Losses</span>
+                <span class="value" id="lCount">0</span>
+                <span class="pct" id="lPct">0%</span>
             </div>
         </div>
 
-        <div class="button-group">
-            <button class="btn btn-primary" onclick="alert('✨ GitHub Pages is working! Your site is live.')">Click to Test</button>
-            <a href="https://github.com/zvw3/reto" class="btn btn-outline" target="_blank">View on GitHub →</a>
+        <!-- Bar -->
+        <div class="bar-wrapper">
+            <div class="bar-track">
+                <div class="bar-w" id="barW" style="width:50%;"></div>
+                <div class="bar-l" id="barL" style="width:50%;"></div>
+            </div>
+            <div class="bar-divider" id="barDivider" style="left:50%;"></div>
         </div>
 
-        <footer>
-            deployed via GitHub Pages • 2026
-        </footer>
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <button class="ctrl-btn btn-l" id="btnL" aria-label="Increase Losses">
+                    <span class="arrow-icon">◀</span>
+                </button>
+                <span class="ctrl-label">
+                    <span class="highlight-l">L</span>
+                    <span class="arrow-hint">+1</span>
+                </span>
+            </div>
+
+            <div class="control-group" style="gap:0.2rem;">
+                <button class="ctrl-btn btn-l small" id="btnLDec" aria-label="Decrease Losses">
+                    <span class="arrow-icon">−</span>
+                </button>
+                <span style="color:rgba(255,255,255,0.03);font-size:0.4rem;">|</span>
+                <button class="ctrl-btn btn-w small" id="btnWDec" aria-label="Decrease Wins">
+                    <span class="arrow-icon">−</span>
+                </button>
+                <span class="ctrl-label" style="min-width:auto;">
+                    <span class="highlight-w">W</span>
+                    <span class="arrow-hint">+1</span>
+                </span>
+                <button class="ctrl-btn btn-w" id="btnW" aria-label="Increase Wins">
+                    <span class="arrow-icon">▶</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="reset-area">
+            <button class="reset-btn" id="resetBtn">
+                <span class="icon">⟳</span> reset both
+            </button>
+        </div>
+
+        <div class="slax-badge">slax · w/l</div>
     </div>
 
     <script>
-        // Console confirmation
-        console.log("🎉 Fancy UI loaded — GitHub Pages is working!");
+        (function() {
+            'use strict';
+
+            // ─── DOM refs ───
+            const wCountEl = document.getElementById('wCount');
+            const lCountEl = document.getElementById('lCount');
+            const wPctEl = document.getElementById('wPct');
+            const lPctEl = document.getElementById('lPct');
+            const statW = document.getElementById('statW');
+            const statL = document.getElementById('statL');
+            const barW = document.getElementById('barW');
+            const barL = document.getElementById('barL');
+            const barDivider = document.getElementById('barDivider');
+            const btnW = document.getElementById('btnW');
+            const btnL = document.getElementById('btnL');
+            const btnWDec = document.getElementById('btnWDec');
+            const btnLDec = document.getElementById('btnLDec');
+            const resetBtn = document.getElementById('resetBtn');
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const keyHint = document.getElementById('keyHint');
+
+            // ─── State ───
+            let wins = 0;
+            let losses = 0;
+
+            // ─── Load from localStorage ───
+            function loadState() {
+                try {
+                    const raw = localStorage.getItem('slaxWlOverlay');
+                    if (raw) {
+                        const data = JSON.parse(raw);
+                        if (typeof data.wins === 'number' && typeof data.losses === 'number' &&
+                            data.wins >= 0 && data.losses >= 0) {
+                            wins = data.wins;
+                            losses = data.losses;
+                            return true;
+                        }
+                    }
+                } catch (_) { /* ignore */ }
+                return false;
+            }
+
+            // ─── Save to localStorage ───
+            function saveState() {
+                try {
+                    localStorage.setItem('slaxWlOverlay', JSON.stringify({ wins, losses }));
+                    return true;
+                } catch (_) { return false; }
+            }
+
+            // ─── Update UI ───
+            function updateUI(animate = true) {
+                const total = wins + losses;
+                let wPct, lPct;
+
+                if (total === 0) {
+                    wPct = 50;
+                    lPct = 50;
+                } else {
+                    wPct = (wins / total) * 100;
+                    lPct = (losses / total) * 100;
+                }
+
+                const wPctRounded = Math.round(wPct);
+                const lPctRounded = Math.round(lPct);
+
+                wCountEl.textContent = wins;
+                lCountEl.textContent = losses;
+                wPctEl.textContent = wPctRounded + '%';
+                lPctEl.textContent = lPctRounded + '%';
+
+                barW.style.width = wPctRounded + '%';
+                barL.style.width = lPctRounded + '%';
+                barDivider.style.left = wPctRounded + '%';
+
+                statW.classList.remove('leading');
+                statL.classList.remove('leading');
+
+                if (total > 0) {
+                    if (wins > losses) {
+                        statW.classList.add('leading');
+                    } else if (losses > wins) {
+                        statL.classList.add('leading');
+                    }
+                }
+
+                if (animate) {
+                    wCountEl.classList.remove('pop');
+                    lCountEl.classList.remove('pop');
+                    void wCountEl.offsetWidth;
+                    void lCountEl.offsetWidth;
+                    wCountEl.classList.add('pop');
+                    lCountEl.classList.add('pop');
+                }
+            }
+
+            // ─── Mutators ───
+            let autoSaveTimer = null;
+
+            function incrementW() {
+                wins++;
+                updateUI(true);
+                scheduleAutoSave();
+            }
+
+            function decrementW() {
+                if (wins > 0) {
+                    wins--;
+                    updateUI(true);
+                    scheduleAutoSave();
+                }
+            }
+
+            function incrementL() {
+                losses++;
+                updateUI(true);
+                scheduleAutoSave();
+            }
+
+            function decrementL() {
+                if (losses > 0) {
+                    losses--;
+                    updateUI(true);
+                    scheduleAutoSave();
+                }
+            }
+
+            function resetBoth() {
+                if (wins === 0 && losses === 0) return;
+                wins = 0;
+                losses = 0;
+                updateUI(true);
+                scheduleAutoSave();
+                showToast('⟳ Reset to zero');
+            }
+
+            function scheduleAutoSave() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    saveState();
+                }, 600);
+            }
+
+            // ─── Toast ───
+            let toastTimer = null;
+
+            function showToast(msg, isError = false) {
+                toastMsg.textContent = msg;
+                toast.className = 'toast';
+                if (isError) toast.classList.add('error');
+                toast.classList.add('visible');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('visible');
+                }, 2000);
+            }
+
+            // ─── Ripple ───
+            function addRipple(e, btn) {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                const size = Math.max(rect.width, rect.height) * 0.5;
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = (x - size / 2) + 'px';
+                ripple.style.top = (y - size / 2) + 'px';
+                btn.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 500);
+            }
+
+            // ─── Event listeners ───
+            btnW.addEventListener('click', function(e) {
+                addRipple(e, this);
+                incrementW();
+            });
+
+            btnL.addEventListener('click', function(e) {
+                addRipple(e, this);
+                incrementL();
+            });
+
+            btnWDec.addEventListener('click', function(e) {
+                addRipple(e, this);
+                decrementW();
+            });
+
+            btnLDec.addEventListener('click', function(e) {
+                addRipple(e, this);
+                decrementL();
+            });
+
+            resetBtn.addEventListener('click', function(e) {
+                addRipple(e, this);
+                resetBoth();
+            });
+
+            // ─── Keyboard shortcuts ───
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                const key = e.key;
+
+                if (key === 'ArrowRight') {
+                    e.preventDefault();
+                    incrementW();
+                    btnW.style.transform = 'scale(0.88)';
+                    setTimeout(() => { btnW.style.transform = ''; }, 150);
+                } else if (key === 'ArrowLeft') {
+                    e.preventDefault();
+                    incrementL();
+                    btnL.style.transform = 'scale(0.88)';
+                    setTimeout(() => { btnL.style.transform = ''; }, 150);
+                } else if (key === '+') {
+                    e.preventDefault();
+                    incrementW();
+                } else if (key === '-') {
+                    e.preventDefault();
+                    incrementL();
+                } else if (key === 'r' || key === 'R') {
+                    e.preventDefault();
+                    resetBoth();
+                } else if (key === 's' || key === 'S') {
+                    e.preventDefault();
+                    const ok = saveState();
+                    showToast(ok ? '💾 Saved!' : '⚠️ Save failed', !ok);
+                }
+            });
+
+            // ─── Init ───
+            if (!loadState()) {
+                wins = 0;
+                losses = 0;
+            }
+            wins = Math.max(0, Math.round(wins));
+            losses = Math.max(0, Math.round(losses));
+            updateUI(false);
+
+            // ─── Auto-save on visibility change ───
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) saveState();
+            });
+            window.addEventListener('beforeunload', () => saveState());
+
+            // ─── Video fallback ───
+            const bgVideo = document.getElementById('bg-video');
+            bgVideo.addEventListener('error', function() {
+                this.style.display = 'none';
+                document.body.style.background = 'radial-gradient(ellipse at center, #0a0820, #05040e)';
+            });
+
+            // ─── Hide key hint after a while ───
+            setTimeout(() => { keyHint.style.opacity = '0.2'; }, 6000);
+            setTimeout(() => { keyHint.style.opacity = '0.05'; }, 14000);
+
+            // ─── Welcome toast ───
+            setTimeout(() => {
+                showToast('🚀 slax W · L ready', false);
+            }, 400);
+
+            // ─── Expose for debug ───
+            window.__slax = { wins, losses, incrementW, decrementW, incrementL, decrementL, resetBoth, saveState, loadState };
+
+            console.log('🚀 slax W or L overlay loaded');
+            console.log('   ◀ ▶  arrows  ·  + −  keys  ·  R reset  ·  S save');
+            console.log('   Drag the overlay in OBS / TTL Studio');
+
+        })();
     </script>
+
 </body>
 </html>
