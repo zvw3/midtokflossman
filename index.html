@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time TTLS Widget | slaxthecollector</title>
+    <title>TTLS Real-Time Widget</title>
     <style>
+        /* Essential structure for transparent overlays */
         html, body {
-            background: transparent !important; /* Invisible backdrop for stream overlays */
+            background: transparent !important;
             margin: 0;
             padding: 0;
-            width: 400px;
-            height: 300px;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -18,19 +19,24 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
+        /* Widget Box with Fancy Custom Corners & Glow */
         .widget-frame {
-            background: rgba(11, 11, 19, 0.88);
-            border: 2px solid #fe2c55; /* TikTok Brand Red */
-            box-shadow: 0 0 20px rgba(254, 44, 85, 0.25);
-            border-radius: 40px 10px 40px 10px; /* Fancy Custom Edges */
+            background: rgba(11, 11, 19, 0.9); /* Matte glass structure */
+            border: 2px solid #fe2c55; /* TikTok Crimson accent */
+            box-shadow: 0 0 25px rgba(254, 44, 85, 0.35);
+            
+            /* Fancy asymmetric rounded corners */
+            border-radius: 40px 10px 40px 10px; 
+            
             width: 350px;
             padding: 1.5rem;
             text-align: center;
             box-sizing: border-box;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .user-header {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: #ffffff;
             letter-spacing: -0.5px;
@@ -44,26 +50,25 @@
         .status-dot {
             width: 8px;
             height: 8px;
-            background: #25f4ee; /* Cyan active dot */
+            background: #25f4ee; /* Cyan active indicator */
             border-radius: 50%;
             box-shadow: 0 0 8px #25f4ee;
         }
 
         .counter-box {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.04);
             border-radius: 18px;
             padding: 1.25rem 0;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .count-number {
-            font-size: 3.5rem;
+            font-size: 3.6rem;
             font-weight: 900;
             color: #ffffff;
             line-height: 1;
             letter-spacing: -1.5px;
             font-variant-numeric: tabular-nums;
-            transition: color 0.3s ease;
         }
 
         .count-label {
@@ -75,84 +80,92 @@
             margin-top: 8px;
         }
 
-        /* Error/Loading text variations */
+        /* Loading / Error Text Utility */
         .loading {
-            font-size: 1.8rem !important;
-            color: #94a3b8 !important;
-            letter-spacing: 0px !important;
+            font-size: 1.6rem !important;
+            color: #64748b !important;
+            letter-spacing: -0.5px !important;
         }
     </style>
 </head>
 <body>
 
-    <div class="widget-frame">
+    <div class="widget-frame" id="widgetCard">
         <div class="user-header">
-            <div class="status-dot" id="statusIndicator"></div>
+            <div class="status-dot" id="statusDot"></div>
             slaxthecollector
         </div>
         
         <div class="counter-box">
-            <div class="count-number loading" id="totalFollowers">Connecting...</div>
-            <div class="count-label" id="labelField">Live Followers</div>
+            <div class="count-number loading" id="totalFollowers">FETCHING...</div>
+            <div class="count-label">Live Followers</div>
         </div>
     </div>
 
     <script>
         const username = "slaxthecollector";
         const counterEl = document.getElementById('totalFollowers');
-        const statusDot = document.getElementById('statusIndicator');
+        const statusDot = document.getElementById('statusDot');
+        const card = document.getElementById('widgetCard');
 
-        // Accesses the livecounts API stream via an open cors wrapper proxy
-        async function fetchRealFollowers() {
+        let cachedId = null;
+
+        async function getTikTokStats() {
             try {
-                // Step 1: Query the user lookup database
-                const searchUrl = `https://tiktok.livecounts.io/user/search/${username}`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
-                
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error();
-                
-                const wrapperData = await response.json();
-                const data = JSON.parse(wrapperData.contents);
-                
-                if (data && data.users && data.users.length > 0) {
-                    // Match exact profile
-                    const targetUser = data.users.find(u => u.username.toLowerCase() === username.toLowerCase()) || data.users[0];
-                    const userId = targetUser.userId;
-
-                    // Step 2: Fetch real-time specific user stats using parsed ID
-                    const statsUrl = `https://tiktok.livecounts.io/user/stats/${userId}`;
-                    const statsProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(statsUrl)}`;
+                // Step 1: Find User ID if not cached yet
+                if (!cachedId) {
+                    const searchUrl = `https://tiktok.livecounts.io/user/search/${username}`;
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(searchUrl)}`;
                     
-                    const statsResponse = await fetch(statsProxy);
-                    const statsWrapper = await statsResponse.json();
-                    const statsData = JSON.parse(statsWrapper.contents);
-
-                    if (statsData && statsData.followers !== undefined) {
-                        // Remove loading styles and display absolute real value
-                        counterEl.classList.remove('loading');
-                        counterEl.style.color = '#ffffff';
-                        counterEl.innerText = Number(statsData.followers).toLocaleString();
-                        statusDot.style.background = '#25f4ee';
-                        statusDot.style.boxShadow = '0 0 8px #25f4ee';
+                    const res = await fetch(proxyUrl);
+                    if (!res.ok) throw new Error("Search Proxy Error");
+                    const data = await res.json();
+                    
+                    if (data && data.users && data.users.length > 0) {
+                        const target = data.users.find(u => u.username.toLowerCase() === username.toLowerCase()) || data.users[0];
+                        cachedId = target.userId;
+                    } else {
+                        throw new Error("User Not Found");
                     }
-                } else {
-                    counterEl.innerText = "User Offline";
-                    counterEl.classList.add('loading');
+                }
+
+                // Step 2: Fetch the live stat array with the User ID
+                const statsUrl = `https://tiktok.livecounts.io/user/stats/${cachedId}`;
+                const statsProxy = `https://corsproxy.io/?${encodeURIComponent(statsUrl)}`;
+                
+                const statsRes = await fetch(statsProxy);
+                if (!statsRes.ok) throw new Error("Stats Proxy Error");
+                const statsData = await statsRes.json();
+
+                if (statsData && statsData.followers !== undefined) {
+                    const currentCount = Number(statsData.followers);
+                    
+                    // Simple pop scale effect if count updates
+                    if (counterEl.innerText !== currentCount.toLocaleString() && !counterEl.classList.contains('loading')) {
+                        card.style.transform = 'scale(1.04)';
+                        setTimeout(() => card.style.transform = 'scale(1)', 150);
+                    }
+
+                    counterEl.classList.remove('loading');
+                    counterEl.innerText = currentCount.toLocaleString();
+                    
+                    // Active Status Colors
+                    statusDot.style.background = '#25f4ee';
+                    statusDot.style.boxShadow = '0 0 8px #25f4ee';
                 }
             } catch (err) {
-                // Graceful fallback if proxy is busy or API limits rate
-                console.error("API Fetch Error: ", err);
-                statusDot.style.background = '#fe2c55';
-                statusDot.style.boxShadow = '0 0 8px #fe2c55';
+                console.error("Fetch Exception Handled: ", err);
+                // Turn status orange/red on brief network rate limits
+                statusDot.style.background = '#ff7a00';
+                statusDot.style.boxShadow = '0 0 8px #ff7a00';
             }
         }
 
-        // Poll TikTok servers every 10 seconds (keeps it accurate without spamming the proxy server)
-        setInterval(fetchRealFollowers, 10000);
-        
-        // Initial kick-off run
-        fetchRealFollowers();
+        // Run immediately on boot
+        getTikTokStats();
+
+        // Update loop: every 15 seconds to stay inside free tier proxy thresholds safely
+        setInterval(getTikTokStats, 15000);
     </script>
 </body>
 </html>
