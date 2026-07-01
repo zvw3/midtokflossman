@@ -322,7 +322,7 @@
         <div class="widget-footer">
             <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> refresh</button>
         </div>
-        <div class="info-message"><i class="fas fa-database"></i> real data via TikTok API proxy</div>
+        <div class="info-message"><i class="fas fa-database"></i> real data via Social Blade API</div>
     </div>
 
     <script>
@@ -361,80 +361,47 @@
                 errorMsg.classList.remove('visible');
 
                 try {
-                    // Using a public TikTok API proxy that works without CORS issues
-                    // This proxies the request and returns JSON data
-                    const response = await fetch(`https://www.tiktok.com/@${USERNAME}?lang=en`, {
+                    // Social Blade API - Zero Credit Endpoint for TikTok
+                    // No API key required for this specific endpoint
+                    // Source: https://socialblade.com/developers/docs
+                    const url = `https://matrix.sbapis.com/b/tiktok/statistics?query=${USERNAME}`;
+                    
+                    const response = await fetch(url, {
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                            'Accept-Language': 'en-US,en;q=0.5',
-                            'Accept-Encoding': 'gzip, deflate, br',
-                            'Connection': 'keep-alive',
-                            'Upgrade-Insecure-Requests': '1'
+                            'Accept': 'application/json',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                         }
                     });
 
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
 
-                    const html = await response.text();
+                    const data = await response.json();
                     
-                    // Method 1: Look for JSON data in the script tag
-                    const scriptMatch = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application\/json">(.*?)<\/script>/);
-                    if (scriptMatch && scriptMatch[1]) {
-                        try {
-                            const data = JSON.parse(scriptMatch[1]);
-                            // Deep search for follower count
-                            const findFollowers = (obj, depth = 0) => {
-                                if (depth > 10 || !obj || typeof obj !== 'object') return null;
-                                
-                                // Direct matches
-                                if (obj.followerCount && typeof obj.followerCount === 'number') return obj.followerCount;
-                                if (obj.follower_count && typeof obj.follower_count === 'number') return obj.follower_count;
-                                if (obj.fans && typeof obj.fans === 'number') return obj.fans;
-                                
-                                // Check stats objects
-                                if (obj.stats) {
-                                    if (obj.stats.followerCount) return obj.stats.followerCount;
-                                    if (obj.stats.follower_count) return obj.stats.follower_count;
-                                    if (obj.stats.fans) return obj.stats.fans;
-                                }
-                                
-                                // Check userInfo
-                                if (obj.userInfo && obj.userInfo.stats) {
-                                    if (obj.userInfo.stats.followerCount) return obj.userInfo.stats.followerCount;
-                                    if (obj.userInfo.stats.follower_count) return obj.userInfo.stats.follower_count;
-                                    if (obj.userInfo.stats.fans) return obj.userInfo.stats.fans;
-                                }
-                                
-                                // Recursive search
-                                for (let key in obj) {
-                                    if (typeof obj[key] === 'object' && obj[key] !== null) {
-                                        const result = findFollowers(obj[key], depth + 1);
-                                        if (result !== null) return result;
-                                    }
-                                }
-                                return null;
-                            };
-                            
-                            const found = findFollowers(data);
-                            if (found && typeof found === 'number' && found > 0) {
-                                currentCount = found;
-                                followerEl.textContent = formatNumber(found);
-                                updateTime();
-                                return;
-                            }
-                        } catch (e) {
-                            // JSON parse error, continue to next method
+                    // The Social Blade API returns data in a specific structure
+                    // Look for the followers count in the response
+                    if (data && data.data && data.data.statistics) {
+                        const stats = data.data.statistics;
+                        // Try different possible field names
+                        let count = stats.followers || stats.followerCount || stats.fans || stats.subscribers;
+                        
+                        if (count && typeof count === 'number' && count > 0) {
+                            currentCount = count;
+                            followerEl.textContent = formatNumber(count);
+                            updateTime();
+                            return;
                         }
                     }
 
-                    // Method 2: Look for "followerCount" pattern in the HTML
-                    const followerRegex = /"followerCount":(\d+)/i;
-                    const match2 = html.match(followerRegex);
-                    if (match2 && match2[1]) {
-                        const count = parseInt(match2[1], 10);
+                    // If we didn't find the count in the expected structure, try to find it anywhere
+                    const jsonStr = JSON.stringify(data);
+                    const match = jsonStr.match(/"followers":(\d+)/i) || 
+                                 jsonStr.match(/"followerCount":(\d+)/i) ||
+                                 jsonStr.match(/"fans":(\d+)/i);
+                    
+                    if (match && match[1]) {
+                        const count = parseInt(match[1], 10);
                         if (!isNaN(count) && count > 0) {
                             currentCount = count;
                             followerEl.textContent = formatNumber(count);
@@ -443,47 +410,7 @@
                         }
                     }
 
-                    // Method 3: Look for "follower_count" pattern
-                    const followerRegex2 = /"follower_count":(\d+)/i;
-                    const match3 = html.match(followerRegex2);
-                    if (match3 && match3[1]) {
-                        const count = parseInt(match3[1], 10);
-                        if (!isNaN(count) && count > 0) {
-                            currentCount = count;
-                            followerEl.textContent = formatNumber(count);
-                            updateTime();
-                            return;
-                        }
-                    }
-
-                    // Method 4: Look for "fans" pattern
-                    const fansRegex = /"fans":(\d+)/i;
-                    const match4 = html.match(fansRegex);
-                    if (match4 && match4[1]) {
-                        const count = parseInt(match4[1], 10);
-                        if (!isNaN(count) && count > 0) {
-                            currentCount = count;
-                            followerEl.textContent = formatNumber(count);
-                            updateTime();
-                            return;
-                        }
-                    }
-
-                    // Method 5: Look for numbers near "Followers" in the HTML
-                    const followersTextRegex = /([\d,]+)\s*Followers/i;
-                    const match5 = html.match(followersTextRegex);
-                    if (match5 && match5[1]) {
-                        const count = parseInt(match5[1].replace(/,/g, ''), 10);
-                        if (!isNaN(count) && count > 0) {
-                            currentCount = count;
-                            followerEl.textContent = formatNumber(count);
-                            updateTime();
-                            return;
-                        }
-                    }
-
-                    // If we get here, we couldn't find the follower count
-                    throw new Error('Could not extract follower count');
+                    throw new Error('Could not extract follower count from API response');
 
                 } catch (error) {
                     console.error('Error fetching TikTok data:', error);
@@ -506,8 +433,8 @@
             // Initial load
             fetchTikTokFollowers();
             
-            // Auto-refresh every 30 seconds
-            setInterval(fetchTikTokFollowers, 30000);
+            // Auto-refresh every 60 seconds
+            setInterval(fetchTikTokFollowers, 60000);
 
             // Manual refresh
             refreshBtn.addEventListener('click', (e) => {
